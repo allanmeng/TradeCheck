@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradeCheck - 跨境交易网络合规自测工具</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body {
+            background-color: #0b0c0e;
+            color: #e2e8f0;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen flex flex-col">
+
+    <header class="border-b border-gray-800 bg-[#121418] sticky top-0 z-50 px-4 py-3">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <nav class="flex space-x-2 bg-[#1a1d24] p-1 rounded-xl w-full sm:w-auto">
+                <button id="tab-ip" onclick="switchTab('ip')" class="flex-1 sm:flex-none text-center px-5 py-2 rounded-lg text-sm font-medium transition-all bg-gray-800 text-white shadow">
+                    本机 IP
+                </button>
+                <button id="tab-broker" onclick="switchTab('broker')" class="flex-1 sm:flex-none text-center px-5 py-2 rounded-lg text-sm font-medium transition-all text-gray-400 hover:text-gray-200">
+                    券商探测
+                </button>
+                <button id="tab-policy" onclick="switchTab('policy')" class="flex-1 sm:flex-none text-center px-5 py-2 rounded-lg text-sm font-medium transition-all text-gray-400 hover:text-gray-200">
+                    内地监管政策
+                </button>
+            </nav>
+            <div class="hidden sm:flex text-gray-400 p-2 hover:bg-gray-800 rounded-lg cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6">
+        
+        <section id="content-ip" class="space-y-6">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-white">本机 IP 查询</h1>
+                <p class="text-sm text-gray-400 mt-1">查看你当前网络的 IP 地址、位置信息和常用网站连通性</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                
+                <div class="lg:col-span-5 bg-[#121418] border border-gray-800 rounded-2xl p-5 relative overflow-hidden">
+                    <div class="flex justify-between items-start">
+                        <div class="space-y-4 w-full">
+                            <div>
+                                <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">IPv4</label>
+                                <div class="flex items-center space-x-2 mt-1">
+                                    <span id="ip-v4" class="text-lg font-mono font-bold text-white"></span>
+                                    <button onclick="copyToClipboard('ip-v4')" class="text-gray-500 hover:text-gray-300 transition cursor-pointer">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Location</label>
+                                <p id="ip-location" class="text-sm font-medium text-gray-200 mt-0.5"></p>
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">ISP</label>
+                                <p id="ip-isp" class="text-sm font-medium text-gray-200 mt-0.5"></p>
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">ASN</label>
+                                <p id="ip-asn" class="text-sm font-mono text-gray-300 text-xs mt-0.5"></p>
+                            </div>
+                            <hr class="border-gray-800 my-2">
+                            <div class="opacity-50">
+                                <label class="text-xs font-semibold text-gray-500 uppercase tracking-wider">IPv6</label>
+                                <p id="ip-v6" class="text-xs font-mono text-red-400 mt-0.5"></p>
+                            </div>
+                        </div>
+                        <span id="ip-flag" class="text-3xl"></span>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-7 bg-[#121418] border border-gray-800 rounded-2xl p-5 space-y-4">
+                    <div class="flex justify-between items-center pb-3 border-b border-gray-800/60">
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-200">ip138.com</h4>
+                            <p class="text-xs font-mono text-gray-400 mt-0.5"><span id="ip-domestic-label">IP: 检测中...</span></p>
+                            <p id="ip-domestic-geo" class="text-xs text-gray-400"></p>
+                        </div>
+                        <span class="px-2 py-0.5 text-[10px] font-bold bg-blue-900/40 text-blue-400 border border-blue-800 rounded-md">国内</span>
+                    </div>
+                    <div class="flex justify-between items-center pb-3 border-b border-gray-800/60">
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-200">IP.cn 查询网</h4>
+                            <p class="text-xs font-mono text-gray-400 mt-0.5"><span id="ip-cnip-label">IP: 检测中...</span></p>
+                            <p id="ip-cnip-geo" class="text-xs text-gray-400"></p>
+                        </div>
+                        <span class="px-2 py-0.5 text-[10px] font-bold bg-blue-900/40 text-blue-400 border border-blue-800 rounded-md">国内</span>
+                    </div>
+                    <div class="flex justify-between items-center pb-3 border-b border-gray-800/60">
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-200">Cloudflare</h4>
+                            <p class="text-xs font-mono text-gray-400 mt-0.5"><span id="ip-cf-label">IP: 检测中...</span></p>
+                            <p id="ip-cf-geo" class="text-xs text-gray-400"></p>
+                        </div>
+                        <span class="px-2 py-0.5 text-[10px] font-bold bg-emerald-900/40 text-emerald-400 border border-emerald-800 rounded-md">国际</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-200">IPInfo.io</h4>
+                            <p class="text-xs font-mono text-gray-400 mt-0.5"><span id="ip-ipinfo-label">IP: 检测中...</span></p>
+                            <p id="ip-ipinfo-geo" class="text-xs text-gray-400"></p>
+                        </div>
+                        <span class="px-2 py-0.5 text-[10px] font-bold bg-emerald-900/40 text-emerald-400 border border-emerald-800 rounded-md">国际</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-[#121418] border border-gray-800 rounded-2xl p-5">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-bold text-white flex items-center gap-1.5">💬 微信</span>
+                            <span class="text-[10px] bg-blue-900/30 text-blue-400 px-1.5 py-0.5 rounded border border-blue-800/60">国内</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span id="latency-wechat" class="text-xs font-mono font-bold text-gray-500">检测中</span>
+                            <div id="dots-wechat" class="flex space-x-0.5 overflow-hidden"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-bold text-white flex items-center gap-1.5">🛍️ 淘宝</span>
+                            <span class="text-[10px] bg-blue-900/30 text-blue-400 px-1.5 py-0.5 rounded border border-blue-800/60">国内</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span id="latency-taobao" class="text-xs font-mono font-bold text-gray-500">检测中</span>
+                            <div id="dots-taobao" class="flex space-x-0.5 overflow-hidden"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-bold text-white flex items-center gap-1.5">💻 GitHub</span>
+                            <span class="text-[10px] bg-emerald-900/30 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-800/60">国际</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span id="latency-github" class="text-xs font-mono font-bold text-gray-500">检测中</span>
+                            <div id="dots-github" class="flex space-x-0.5 overflow-hidden"></div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-bold text-white flex items-center gap-1.5">📺 YouTube</span>
+                            <span class="text-[10px] bg-emerald-900/30 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-800/60">国际</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span id="latency-youtube" class="text-xs font-mono font-bold text-gray-500">检测中</span>
+                            <div id="dots-youtube" class="flex space-x-0.5 overflow-hidden"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="content-broker" class="hidden space-y-6">
+            
+            <div class="bg-[#121418] border border-gray-800 rounded-2xl p-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight text-white">跨境券商合规探测</h1>
+                    <p class="text-sm text-gray-400 mt-1">核心风控精准定位：由于当前规则主要限制<b>内地 IP 执行买入动作</b>，本工具对各项核心行为进行链路细分诊断。</p>
+                </div>
+                <div id="broker-baseline" class="bg-[#1a1d24] border border-gray-700 px-4 py-2.5 rounded-xl flex items-center space-x-3 w-full sm:w-auto">
+                    <div class="w-2.5 h-2.5 bg-gray-500 rounded-full animate-pulse" id="baseline-dot"></div>
+                    <div>
+                        <p class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">当前检测基准 IP</p>
+                        <p class="text-sm font-mono font-bold text-white" id="baseline-ip">加载中... <span class="text-xs text-gray-500 ml-1" id="baseline-geo"></span></p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+                <button id="btn-detect-all" onclick="runFullDetection()" class="bg-gray-800 hover:bg-gray-700 text-white text-sm px-5 py-2 rounded-xl transition-all border border-gray-700 flex items-center gap-2">
+                    <svg class="w-4 h-4" id="detect-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    <span id="btn-detect-text">开始全程链路探测</span>
+                </button>
+                <span id="detect-status" class="text-xs text-gray-500"></span>
+                <span id="last-probe-time" class="text-xs text-gray-600"></span>
+            </div>
+
+            <div id="broker-cards" class="space-y-4">
+                
+                <!-- 富途 -->
+                <div class="bg-[#121418] border border-gray-800 rounded-2xl p-5 space-y-4" data-broker="futu">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-gray-800 gap-2">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-xl">📊</span>
+                            <h3 class="text-base font-bold text-white">富途证券 (Futu Futu)</h3>
+                        </div>
+                        <div id="diag-futu" class="flex items-center space-x-2 bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-xl">
+                            <span class="text-xs text-gray-400">综合诊断：</span>
+                            <span class="text-xs font-bold text-gray-500">等待探测...</span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="bg-[#1a1d24] border border-gray-800/80 rounded-xl p-3.5 space-y-2 chain-cell" data-broker="futu" data-chain="market">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-400 font-medium">📈 访问大盘的 IP 位置</span>
+                                <span class="text-[10px] bg-gray-800 text-gray-500 px-1.5 py-0.5 rounded border border-gray-700 tag-waiting">排队中</span>
+                            </div>
+                            <p class="text-sm font-mono font-bold text-gray-500 chain-ip">—</p>
+                            <p class="text-xs text-gray-600 chain-latency"></p>
+                            <p class="text-xs text-gray-600 chain-geo"></p>
+                        </div>
+                        <div class="bg-[#1a1d24] border border-gray-800/80 rounded-xl p-3.5 space-y-2 chain-cell" data-broker="futu" data-chain="buy">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-400 font-medium">🛒 访问交易买入的 IP 位置</span>
+                                <span class="text-[10px] bg-gray-800 text-gray-500 px-1.5 py-0.5 rounded border border-gray-700 tag-waiting">排队中</span>
+                            </div>
+                            <p class="text-sm font-mono font-bold text-gray-500 chain-ip">—</p>
+                            <p class="text-xs text-gray-600 chain-latency"></p>
+                            <p class="text-xs text-gray-600 chain-geo"></p>
+                        </div>
+                        <div class="bg-[#1a1d24] border border-gray-800/80 rounded-xl p-3.5 space-y-2 chain-cell" data-broker="futu" data-chain="sell">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-400 font-medium">💰 访问交易卖出的 IP 位置</span>
+                                <span class="text-[10px] bg-gray-800 text-gray-500 px-1.5 py-0.5 rounded border border-gray-700 tag-waiting">排队中</span>
+                            </div>
+                            <p class="text-sm font-mono font-bold text-gray-500 chain-ip">—</p>
+                            <p class="text-xs text-gray-600 chain-latency"></p>
+                            <p class="text-xs text-gray-600 chain-geo"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 老虎 -->
+                <div class="bg-[#121418] border border-gray-800 rounded-2xl p-5 space-y-4" data-broker="tiger">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-gray-800 gap-2">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-xl">🐯</span>
+                            <h3 class="text-base font-bold text-white">老虎证券 (Tiger Brokers)</h3>
+                        </div>
+                        <div id="diag-tiger" class="flex items-center space-x-2 bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-xl">
+                            <span class="text-xs text-gray-400">综合诊断：</span>
+                            <span class="text-xs font-bold text-gray-500">等待探测...</span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="bg-[#1a1d24] border border-gray-800/80 rounded-xl p-3.5 space-y-2 chain-cell" data-broker="tiger" data-chain="market">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-400 font-medium">📈 访问大盘的 IP 位置</span>
+                                <span class="text-[10px] bg-gray-800 text-gray-500 px-1.5 py-0.5 rounded border border-gray-700 tag-waiting">排队中</span>
+                            </div>
+                            <p class="text-sm font-mono font-bold text-gray-500 chain-ip">—</p>
+                            <p class="text-xs text-gray-600 chain-latency"></p>
+                            <p class="text-xs text-gray-600 chain-geo"></p>
+                        </div>
+                        <div class="bg-[#1a1d24] border border-gray-800/80 rounded-xl p-3.5 space-y-2 chain-cell" data-broker="tiger" data-chain="buy">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-400 font-medium">🛒 访问交易买入的 IP 位置</span>
+                                <span class="text-[10px] bg-gray-800 text-gray-500 px-1.5 py-0.5 rounded border border-gray-700 tag-waiting">排队中</span>
+                            </div>
+                            <p class="text-sm font-mono font-bold text-gray-500 chain-ip">—</p>
+                            <p class="text-xs text-gray-600 chain-latency"></p>
+                            <p class="text-xs text-gray-600 chain-geo"></p>
+                        </div>
+                        <div class="bg-[#1a1d24] border border-gray-800/80 rounded-xl p-3.5 space-y-2 chain-cell" data-broker="tiger" data-chain="sell">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-400 font-medium">💰 访问交易卖出的 IP 位置</span>
+                                <span class="text-[10px] bg-gray-800 text-gray-500 px-1.5 py-0.5 rounded border border-gray-700 tag-waiting">排队中</span>
+                            </div>
+                            <p class="text-sm font-mono font-bold text-gray-500 chain-ip">—</p>
+                            <p class="text-xs text-gray-600 chain-latency"></p>
+                            <p class="text-xs text-gray-600 chain-geo"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 长桥 -->
+                <div class="bg-[#121418] border border-gray-800 rounded-2xl p-5 space-y-4" data-broker="longbridge">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-gray-800 gap-2">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-xl">🐳</span>
+                            <h3 class="text-base font-bold text-white">长桥证券 (Longbridge)</h3>
+                        </div>
+                        <div id="diag-longbridge" class="flex items-center space-x-2 bg-gray-900 border border-gray-800 px-3 py-1.5 rounded-xl">
+                            <span class="text-xs text-gray-400">综合诊断：</span>
+                            <span class="text-xs font-bold text-gray-500">等待探测...</span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="bg-[#1a1d24] border border-gray-800/80 rounded-xl p-3.5 space-y-2 chain-cell" data-broker="longbridge" data-chain="market">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-400 font-medium">📈 访问大盘的 IP 位置</span>
+                                <span class="text-[10px] bg-gray-800 text-gray-500 px-1.5 py-0.5 rounded border border-gray-700 tag-waiting">排队中</span>
+                            </div>
+                            <p class="text-sm font-mono font-bold text-gray-500 chain-ip">—</p>
+                            <p class="text-xs text-gray-600 chain-latency"></p>
+                            <p class="text-xs text-gray-600 chain-geo"></p>
+                        </div>
+                        <div class="bg-[#1a1d24] border border-gray-800/80 rounded-xl p-3.5 space-y-2 chain-cell" data-broker="longbridge" data-chain="buy">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-400 font-medium">🛒 访问交易买入的 IP 位置</span>
+                                <span class="text-[10px] bg-gray-800 text-gray-500 px-1.5 py-0.5 rounded border border-gray-700 tag-waiting">排队中</span>
+                            </div>
+                            <p class="text-sm font-mono font-bold text-gray-500 chain-ip">—</p>
+                            <p class="text-xs text-gray-600 chain-latency"></p>
+                            <p class="text-xs text-gray-600 chain-geo"></p>
+                        </div>
+                        <div class="bg-[#1a1d24] border border-gray-800/80 rounded-xl p-3.5 space-y-2 chain-cell" data-broker="longbridge" data-chain="sell">
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-400 font-medium">💰 访问交易卖出的 IP 位置</span>
+                                <span class="text-[10px] bg-gray-800 text-gray-500 px-1.5 py-0.5 rounded border border-gray-700 tag-waiting">排队中</span>
+                            </div>
+                            <p class="text-sm font-mono font-bold text-gray-500 chain-ip">—</p>
+                            <p class="text-xs text-gray-600 chain-latency"></p>
+                            <p class="text-xs text-gray-600 chain-geo"></p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="bg-amber-950/20 border border-amber-900/60 rounded-2xl p-5">
+                <h4 class="text-sm font-bold text-amber-400 flex items-center gap-1.5">💡 为什么买入更容易被拦截？</h4>
+                <p class="text-xs text-amber-200/80 mt-1.5 leading-relaxed">
+                    大部分跨境券商的合规风控采取<b>"最小化精准拦截"</b>策略。行情查看（大盘）和资产清仓（卖出）通常保持开放以降低客诉；但一旦用户点击<b>【买入】</b>，App 会强制唤醒底层高优先级安全通道，此通道若未被软路由虚拟网卡（TUN）完全锁死，就会发生国内真 IP 绕过代理"抢跑"泄漏的现象。
+                </p>
+            </div>
+        </section>
+
+        <!-- 内地监管政策 -->
+        <section id="content-policy" class="hidden space-y-6">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight text-white">内地监管政策</h1>
+                <p class="text-sm text-gray-400 mt-1">2026年6月12日起，头部跨境券商对中国内地账户的服务调整公告汇总</p>
+            </div>
+
+            <div class="bg-blue-950/20 border border-blue-900/60 rounded-2xl p-5">
+                <p class="text-xs text-blue-200/80 leading-relaxed">
+                    根据中国证监会关于<a href="https://www.csrc.gov.cn" target="_blank" class="text-blue-400 underline">规范跨境证券业务的行业监管要求</a>及"两年集中整治"安排，富途证券、老虎证券、长桥证券于 2026 年 6 月初陆续发布公告，<b>自 2026 年 6 月 12 日起</b>统一调整中国内地存量账户服务。以下是各家券商的核心政策原文及公告查询路径。
+                </p>
+            </div>
+
+            <!-- 富途 -->
+            <div class="bg-[#121418] border border-gray-800 rounded-2xl p-5 space-y-4">
+                <div class="flex items-center space-x-3 pb-4 border-b border-gray-800">
+                    <span class="text-xl">📊</span>
+                    <h3 class="text-base font-bold text-white">富途证券 (Futu Holdings / moomoo)</h3>
+                    <span class="text-[10px] bg-blue-900/40 text-blue-400 px-1.5 py-0.5 rounded border border-blue-800">6 月 4 日公告</span>
+                </div>
+
+                <div class="bg-red-950/10 border border-red-900/40 rounded-xl p-4 space-y-2">
+                    <h4 class="text-sm font-bold text-red-400">🛑 核心调整（自 2026 年 6 月 12 日起）</h4>
+                    <ul class="text-xs text-gray-300 space-y-1.5 list-disc pl-4">
+                        <li><b>交易服务：</b>暂停中国内地账户所有品种的<b>买入（开仓）</b>交易。卖出（平仓）<b class="text-emerald-400">不受影响</b>。</li>
+                        <li><b>资金划转：</b>暂停内地<b>资金转入</b>服务。出金（提币）通道<b class="text-emerald-400">维持正常</b>。</li>
+                        <li><b>资产安全：</b>资产查询、持仓查看、卖出等操作完全正常。调整不影响为客户在境外提供的服务，也不影响客户资产安全。</li>
+                    </ul>
+                </div>
+
+                <div class="bg-[#1a1d24] border border-gray-800/80 rounded-xl p-4 space-y-2">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">📎 官方公告查询路径</h4>
+                    <div class="text-xs text-gray-400 space-y-1">
+                        <p>• <b>IR 官网：</b><a href="https://ir.futuholdings.com/" target="_blank" class="text-blue-400 underline">ir.futuholdings.com</a> → News &amp; Events / Press Releases（SEC 6-K 公告）</p>
+                        <p>• <b>App 路径：</b>富途牛牛 App →【我的】→【帮助中心】/【热点问题】</p>
+                        <p>• <b>公告日期：</b>2026 年 6 月 4 日晚</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 老虎 -->
+            <div class="bg-[#121418] border border-gray-800 rounded-2xl p-5 space-y-4">
+                <div class="flex items-center space-x-3 pb-4 border-b border-gray-800">
+                    <span class="text-xl">🐯</span>
+                    <h3 class="text-base font-bold text-white">老虎证券 (Tiger Brokers / UP Fintech)</h3>
+                    <span class="text-[10px] bg-blue-900/40 text-blue-400 px-1.5 py-0.5 rounded border border-blue-800">6 月 2 日公告</span>
+                </div>
+
+                <div class="bg-red-950/10 border border-red-900/40 rounded-xl p-4 space-y-2">
+                    <h4 class="text-sm font-bold text-red-400">🛑 核心调整（自 2026 年 6 月 12 日起）</h4>
+                    <ul class="text-xs text-gray-300 space-y-1.5 list-disc pl-4">
+                        <li><b>交易服务：</b>限制位于中国内地的投资者进行<b>开仓</b>操作。卖出及平仓<b class="text-emerald-400">不受影响</b>。</li>
+                        <li><b>资金划转：</b>内地<b>入金</b>暂停。出金<b class="text-emerald-400">正常</b>。</li>
+                        <li><b>特别说明：</b>若存量投资者<b>肉身位于境外</b>（即物理处于境外、非内地网络及 Geofencing 环境下），仍可正常进行证券买卖。</li>
+                    </ul>
+                </div>
+
+                <div class="bg-[#1a1d24] border border-gray-800/80 rounded-xl p-4 space-y-2">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">📎 官方公告查询路径</h4>
+                    <div class="text-xs text-gray-400 space-y-1">
+                        <p>• <b>IR 官网：</b><a href="https://ir.itiger.com/" target="_blank" class="text-blue-400 underline">ir.itiger.com</a> → News &amp; Media / Press Releases（查看 6 月 2 日前后公告）</p>
+                        <p>• <b>公告中心：</b><a href="https://www.tigerbrokers.com.hk/notice" target="_blank" class="text-blue-400 underline">tigerbrokers.com.hk/notice</a></p>
+                        <p>• <b>帮助中心：</b><a href="https://www.tigerbrokers.com/help" target="_blank" class="text-blue-400 underline">tigerbrokers.com/help</a></p>
+                        <p>• <b>公告日期：</b>2026 年 6 月 2 日</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 长桥 -->
+            <div class="bg-[#121418] border border-gray-800 rounded-2xl p-5 space-y-4">
+                <div class="flex items-center space-x-3 pb-4 border-b border-gray-800">
+                    <span class="text-xl">🐳</span>
+                    <h3 class="text-base font-bold text-white">长桥证券 (Longbridge)</h3>
+                    <span class="text-[10px] bg-blue-900/40 text-blue-400 px-1.5 py-0.5 rounded border border-blue-800">6 月 3 日公告</span>
+                </div>
+
+                <div class="bg-red-950/10 border border-red-900/40 rounded-xl p-4 space-y-2">
+                    <h4 class="text-sm font-bold text-red-400">🛑 核心调整（自 2026 年 6 月 12 日起）</h4>
+                    <ul class="text-xs text-gray-300 space-y-1.5 list-disc pl-4">
+                        <li><b>交易服务：</b>暂停包括股票在内的<b>所有产品</b>的新增开仓及加仓。仅支持卖出及平仓<b class="text-emerald-400">（不受限）</b>。</li>
+                        <li><b>资金划转：</b>内地侧<b>转入资金</b>停止接收。出金与境外投资者服务<b class="text-emerald-400">完全照常</b>。</li>
+                        <li><b>资产安全：</b>调整不影响客户资产安全及境外投资者服务。</li>
+                    </ul>
+                </div>
+
+                <div class="bg-[#1a1d24] border border-gray-800/80 rounded-xl p-4 space-y-2">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">📎 官方公告查询路径</h4>
+                    <div class="text-xs text-gray-400 space-y-1">
+                        <p>• <b>公告中心：</b><a href="https://longbridge.hk/" target="_blank" class="text-blue-400 underline">longbridge.hk</a> → 页面底部"公告中心"</p>
+                        <p>• <b>帮助中心：</b><a href="https://support.longbridgeapp.com/" target="_blank" class="text-blue-400 underline">support.longbridgeapp.com</a> → 搜索"存量"或"调整"</p>
+                        <p>• <b>公告日期：</b>2026 年 6 月 3 日晚</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-amber-950/20 border border-amber-900/60 rounded-2xl p-5">
+                <h4 class="text-sm font-bold text-amber-400 flex items-center gap-1.5">💡 对比总结</h4>
+                <p class="text-xs text-amber-200/80 mt-1.5 leading-relaxed">
+                    三家券商的核心调整内容<b>高度一致</b>：自 2026 年 6 月 12 日起，内地账户<b>禁止新开仓（买入）</b>、<b>禁止入金</b>，但<b>允许平仓（卖出）</b>和<b>出金</b>。差异在于：老虎特别明确了"肉身出境可正常交易"的例外条款，长桥覆盖"所有产品"而非仅股票，富途则强调其内地资产持仓客户占比已逐步稀释。这轮调整标志着内地跨境证券业务"只准卖不准买"的合规新阶段全面落地。
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="text-center py-6 text-xs text-gray-600 border-t border-gray-900">
+        <p>© 2026 TradeCheck · 仅供网络连通性与合规性自测使用</p>
+    </footer>
+
+    <script>
+    // ============================================================
+    // TradeCheck — 券商探测引擎 v2.0
+    // 核心策略：IP Echo 三角定位 + DNS-over-HTTPS 解析 + Image Ping 时序分析
+    // ============================================================
+
+    // ---------- 1. 券商配置 ----------
+    const BROKERS = {
+        futu: {
+            name: '富途证券 (Futu Futu)',
+            icon: '📊',
+            chains: {
+                market: {
+                    label: '📈 访问大盘的 IP 位置',
+                    domains: ['www.futunn.com', 'futunn.com'],
+                    desc: 'CDN 行情接口',
+                    probePath: '/',
+                    probeMethod: 'GET'
+                },
+                buy: {
+                    label: '🛒 访问交易买入的 IP 位置',
+                    domains: ['api.futunn.com', 'futuapi.com'],
+                    desc: '核心下单风控接口（高风险）',
+                    probePath: '/trade/buy',
+                    probeMethod: 'POST'
+                },
+                sell: {
+                    label: '💰 访问交易卖出的 IP 位置',
+                    domains: ['api.futunn.com', 'futuapi.com'],
+                    desc: '资产清仓/平仓接口',
+                    probePath: '/trade/sell',
+                    probeMethod: 'POST'
+                }
+            }
+        },
+        tiger: {
+            name: '老虎证券 (Tiger Brokers)',
+            icon: '🐯',
+            chains: {
+                market: {
+                    label: '📈 访问大盘的 IP 位置',
+                    domains: ['www.itiger.com', 'itiger.com'],
+                    desc: '行情数据接口',
+                    probePath: '/',
+                    probeMethod: 'GET'
+                },
+                buy: {
+                    label: '🛒 访问交易买入的 IP 位置',
+                    domains: ['trade.itiger.com', 'openapi.itiger.com'],
+                    desc: '核心下单风控接口（高风险）',
+                    probePath: '/order/buy',
+                    probeMethod: 'POST'
+                },
+                sell: {
+                    label: '💰 访问交易卖出的 IP 位置',
+                    domains: ['trade.itiger.com', 'openapi.itiger.com'],
+                    desc: '资产清仓接口',
+                    probePath: '/order/sell',
+                    probeMethod: 'POST'
+                }
+            }
+        },
+        longbridge: {
+            name: '长桥证券 (Longbridge)',
+            icon: '🐳',
+            chains: {
+                market: {
+                    label: '📈 访问大盘的 IP 位置',
+                    domains: ['www.longbridge.com', 'api.longbridge.com'],
+                    desc: '行情数据接口',
+                    probePath: '/',
+                    probeMethod: 'GET'
+                },
+                buy: {
+                    label: '🛒 访问交易买入的 IP 位置',
+                    domains: ['trade.longbridge.com', 'api.longbridge.com'],
+                    desc: '核心下单风控接口（高风险）',
+                    probePath: '/order/buy',
+                    probeMethod: 'POST'
+                },
+                sell: {
+                    label: '💰 访问交易卖出的 IP 位置',
+                    domains: ['trade.longbridge.com', 'api.longbridge.com'],
+                    desc: '资产清仓接口',
+                    probePath: '/order/sell',
+                    probeMethod: 'POST'
+                }
+            }
+        }
+    };
+
+    // ---------- 2. IP Geolocation Cache ----------
+    const geoCache = {};
+
+    async function geoLookup(ip) {
+        if (!ip || ip === '—') return null;
+        if (geoCache[ip]) return geoCache[ip];
+
+        // Try ip-api.com first
+        try {
+            const ctrl = new AbortController();
+            const t = setTimeout(() => ctrl.abort(), 5000);
+            const r = await fetch(`https://ip-api.com/json/${ip}?fields=status,country,regionName,city,isp,as,asname,lat,lon,query`, {
+                signal: ctrl.signal
+            });
+            clearTimeout(t);
+            if (r.ok) {
+                const d = await r.json();
+                if (d.status === 'success') {
+                    const info = {
+                        country: d.country,
+                        region: d.regionName,
+                        city: d.city,
+                        isp: d.isp,
+                        asn: d.as,
+                        asname: d.asname,
+                        lat: d.lat,
+                        lon: d.lon,
+                        isCN: d.country === 'China'
+                    };
+                    geoCache[ip] = info;
+                    return info;
+                }
+            }
+        } catch (e) {}
+
+        // Fallback: try ipinfo.io
+        try {
+            const ctrl = new AbortController();
+            const t = setTimeout(() => ctrl.abort(), 5000);
+            const r = await fetch(`https://ipinfo.io/${ip}/json`, { signal: ctrl.signal });
+            clearTimeout(t);
+            if (r.ok) {
+                const d = await r.json();
+                if (d.country) {
+                    const info = {
+                        country: d.country === 'CN' ? 'China' : d.country,
+                        region: d.region || '',
+                        city: d.city || '',
+                        isp: d.org || '',
+                        asn: '',
+                        lat: d.loc ? d.loc.split(',')[0] : '',
+                        lon: d.loc ? d.loc.split(',')[1] : '',
+                        isCN: d.country === 'CN'
+                    };
+                    geoCache[ip] = info;
+                    return info;
+                }
+            }
+        } catch (e) {}
+
+        geoCache[ip] = null;
+        return null;
+    }
+
+    function getFlag(country) {
+        if (!country) return '';
+        const map = {
+            'China': '🇨🇳', 'Singapore': '🇸🇬', 'United States': '🇺🇸',
+            'Japan': '🇯🇵', 'Hong Kong': '🇭🇰', 'South Korea': '🇰🇷',
+            'Taiwan': '🇹🇼', 'Germany': '🇩🇪', 'United Kingdom': '🇬🇧',
+            'Australia': '🇦🇺', 'Canada': '🇨🇦', 'Netherlands': '🇳🇱',
+            'France': '🇫🇷', 'India': '🇮🇳', 'Malaysia': '🇲🇾',
+            'Indonesia': '🇮🇩', 'Vietnam': '🇻🇳', 'Thailand': '🇹🇭',
+            'Philippines': '🇵🇭', 'Russia': '🇷🇺'
+        };
+        return map[country] || '🌐';
+    }
+
+    // ---------- 3. DNS-over-HTTPS Resolution (with China fallback) ----------
+    async function dnsResolve(domain) {
+        const endpoints = [
+            { url: `https://cloudflare-dns.com/dns-query?name=${domain}&type=A`, headers: { 'Accept': 'application/dns-json' } },
+            { url: `https://dns.alidns.com/dns-query?name=${domain}&type=A`, headers: { 'Accept': 'application/dns-json' } },
+            { url: `https://doh.pub/dns-query?name=${domain}&type=A`, headers: { 'Accept': 'application/dns-json' } },
+        ];
+        for (const ep of endpoints) {
+            try {
+                const ctrl = new AbortController();
+                const t = setTimeout(() => ctrl.abort(), 4000);
+                const r = await fetch(ep.url, { headers: ep.headers, signal: ctrl.signal });
+                clearTimeout(t);
+                const d = await r.json();
+                if (d && d.Answer) {
+                    const ips = d.Answer.filter(a => a.type === 1).map(a => a.data);
+                    if (ips.length > 0) return ips;
+                }
+            } catch (e) {}
+        }
+        return [];
+    }
+
+    // ---------- 4. Image Ping — 真实请求时序分析 ----------
+    function imagePing(url, timeoutMs = 8000) {
+        return new Promise((resolve) => {
+            const start = performance.now();
+            const img = new Image();
+            let settled = false;
+
+            const timer = setTimeout(() => {
+                if (!settled) {
+                    settled = true;
+                    resolve({ success: false, latency: timeoutMs, error: 'timeout' });
+                }
+            }, timeoutMs);
+
+            img.onload = () => {
+                if (!settled) {
+                    settled = true;
+                    clearTimeout(timer);
+                    resolve({ success: true, latency: Math.round(performance.now() - start) });
+                }
+            };
+            img.onerror = () => {
+                if (!settled) {
+                    settled = true;
+                    clearTimeout(timer);
+                    resolve({ success: false, latency: Math.round(performance.now() - start), error: 'http-error' });
+                }
+            };
+
+            img.src = url + (url.includes('?') ? '&' : '?') + '_tc=' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+        });
+    }
+
+    // ---------- 4b. API Probe — 模拟券商 API 请求行为 ----------
+    async function apiProbe(url, method = 'GET', timeoutMs = 8000) {
+        return new Promise((resolve) => {
+            const start = performance.now();
+            const ctrl = new AbortController();
+            const t = setTimeout(() => ctrl.abort(), timeoutMs);
+
+            fetch(url, {
+                method: method,
+                mode: 'no-cors',
+                signal: ctrl.signal,
+                headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
+            }).then(() => {
+                // no-cors 模式下返回 opaque response，能收到即说明服务端响应了
+                clearTimeout(t);
+                resolve({ reached: true, latency: Math.round(performance.now() - start), error: null });
+            }).catch((err) => {
+                clearTimeout(t);
+                if (err.name === 'AbortError') {
+                    resolve({ reached: false, latency: timeoutMs, error: 'timeout' });
+                } else {
+                    // 网络错误（如 DNS 解析失败、连接被拒）说明请求根本没到达服务器
+                    resolve({ reached: false, latency: Math.round(performance.now() - start), error: 'network-error' });
+                }
+            });
+        });
+    }
+
+    // ---------- 5. WebRTC IP Leak Detection ----------
+    function detectWebRTCIP() {
+        return new Promise((resolve) => {
+            try {
+                const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+                pc.createDataChannel('');
+                let found = null;
+                pc.onicecandidate = (e) => {
+                    if (e.candidate && e.candidate.candidate) {
+                        const match = e.candidate.candidate.match(/(\d+\.\d+\.\d+\.\d+)/);
+                        if (match) {
+                            const ip = match[1];
+                            // Filter out private IPs
+                            if (!ip.startsWith('10.') && !ip.startsWith('172.16.') && !ip.startsWith('192.168.') && !ip.startsWith('127.')) {
+                                found = ip;
+                            }
+                        }
+                    }
+                    if (!e.candidate) {
+                        pc.close();
+                        resolve(found);
+                    }
+                };
+                pc.createOffer().then(o => pc.setLocalDescription(o)).catch(() => resolve(null));
+                setTimeout(() => { try { pc.close(); } catch(e){} resolve(found); }, 4000);
+            } catch (e) { resolve(null); }
+        });
+    }
+
+    // ---------- 6. IP Echo — 获取本机出口 IP (国内国际双通道) ----------
+    async function getExitIP() {
+        async function fetchJSON(url, timeoutMs = 5000) {
+            const ctrl = new AbortController();
+            const t = setTimeout(() => ctrl.abort(), timeoutMs);
+            try {
+                const r = await fetch(url, { signal: ctrl.signal });
+                clearTimeout(t);
+                if (!r.ok) return null;
+                const text = await r.text();
+                try { return JSON.parse(text); } catch(e) {}
+                return text;
+            } catch(e) { clearTimeout(t); return null; }
+        }
+
+        const services = [
+            // 国际通道（开代理时通）
+            { url: 'https://api.ipify.org?format=json', key: 'ip', geo: null },
+            { url: 'https://ip-api.com/json/?fields=query,country,regionName,city,isp,as,asname', key: 'query', geo: 'ip-api' },
+            // 国内通道 — 明确支持 CORS 的国外服务（国内能通）
+            { url: 'https://api.ip.sb/geoip', key: 'ip', geo: 'ipsb' },
+            // 国内通道 — 国内服务，可能有 CORS
+            { url: 'https://myip.ipip.net/json', key: 'data.ip', geo: 'ipip' },
+        ];
+
+        function getByKey(obj, key) {
+            return key.split('.').reduce((o, k) => (o && o[k] !== undefined) ? o[k] : undefined, obj);
+        }
+
+        for (const svc of services) {
+            const d = await fetchJSON(svc.url);
+            if (!d) continue;
+            let ip = getByKey(d, svc.key);
+            if (!ip) continue;
+            ip = String(ip).trim();
+            if (!ip) continue;
+
+            if (svc.geo === 'ip-api') {
+                geoCache[ip] = {
+                    country: d.country,
+                    region: d.regionName,
+                    city: d.city,
+                    isp: d.isp,
+                    asn: d.as,
+                    isCN: d.country === 'China'
+                };
+            } else if (svc.geo === 'ipsb') {
+                geoCache[ip] = { country: d.country, region: d.region || '', city: d.city || '', isp: d.isp || d.organization || '', asn: d.asn || '', isCN: d.country_code === 'CN' };
+            } else if (svc.geo === 'ipip') {
+                const loc = d.data && d.data.location || [];
+                geoCache[ip] = { country: 'China', region: loc[1] || '', city: loc[2] || '', isp: loc[4] || '', asn: '', isCN: true };
+            }
+            return ip;
+        }
+        return null;
+    }
+
+    // ---------- 7. Latency Baseline ----------
+    async function measureLatencyBaseline() {
+        const domestic = ['https://www.baidu.com/favicon.ico', 'https://www.taobao.com/favicon.ico'];
+        const international = ['https://www.google.com/favicon.ico', 'https://www.cloudflare.com/favicon.ico'];
+
+        let domLatencies = [], intlLatencies = [];
+
+        for (const url of domestic) {
+            const r = await imagePing(url, 5000);
+            if (r.success || r.error === 'http-error') domLatencies.push(r.latency);
+        }
+        for (const url of international) {
+            const r = await imagePing(url, 5000);
+            if (r.success || r.error === 'http-error') intlLatencies.push(r.latency);
+        }
+
+        const avg = (arr) => arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null;
+        return {
+            domestic: avg(domLatencies),
+            international: avg(intlLatencies)
+        };
+    }
+
+    // ---------- 8. Main Probe Engine ----------
+    async function probeBrokerChain(brokerKey, chainKey, chain) {
+        const result = {
+            broker: brokerKey,
+            chain: chainKey,
+            dnsIPs: [],
+            pingResults: [],
+            apiResults: [],
+            bestLatency: null,
+            apiReachable: null,
+            exitIp: null,
+            geoInfo: null,
+            status: 'unknown',
+            details: ''
+        };
+
+        // Step 1: DNS resolution for each domain
+        for (const domain of chain.domains) {
+            const ips = await dnsResolve(domain);
+            for (const ip of ips) {
+                if (!result.dnsIPs.find(x => x.ip === ip)) {
+                    const geo = await geoLookup(ip);
+                    result.dnsIPs.push({ domain, ip, geo });
+                }
+            }
+        }
+
+        // Step 2: Image Ping to each domain
+        for (const domain of chain.domains) {
+            const pingUrl = `https://${domain}/favicon.ico`;
+            const pingResult = await imagePing(pingUrl, 6000);
+            pingResult.domain = domain;
+            pingResult.url = pingUrl;
+            result.pingResults.push(pingResult);
+            if (pingResult.success && (result.bestLatency === null || pingResult.latency < result.bestLatency)) {
+                result.bestLatency = pingResult.latency;
+            }
+        }
+
+        // Step 2b: API Probe — 模拟真实 API 请求行为
+        // 大盘用 GET，买入/卖出用 POST，检测服务器对各端口的响应差异
+        for (const domain of chain.domains) {
+            const apiUrl = `https://${domain}${chain.probePath || '/'}`;
+            const apiResult = await apiProbe(apiUrl, chain.probeMethod || 'GET', 6000);
+            apiResult.domain = domain;
+            apiResult.url = apiUrl;
+            apiResult.method = chain.probeMethod || 'GET';
+            result.apiResults.push(apiResult);
+            if (apiResult.reached) {
+                result.apiReachable = true;
+            }
+        }
+
+        // Step 3: Analyze routing + API behavior
+        const allDnsIPs = result.dnsIPs.map(x => x.ip);
+        const uniqueIPs = [...new Set(allDnsIPs)];
+        const cnDnsIPs = result.dnsIPs.filter(x => x.geo && x.geo.isCN);
+        const intlDnsIPs = result.dnsIPs.filter(x => x.geo && !x.geo.isCN);
+
+        const successfulPings = result.pingResults.filter(p => p.success || p.error === 'http-error');
+        const timedOutPings = result.pingResults.filter(p => p.error === 'timeout');
+        const anySuccess = successfulPings.length > 0;
+
+        // 买入/卖出链路特殊分析
+        const isBuyChain = chainKey === 'buy';
+        const isSellChain = chainKey === 'sell';
+
+        // 如果 DNS 解析到中国 IP → 风险最高
+        if (cnDnsIPs.length > 0 && cnDnsIPs.length >= uniqueIPs.length / 2) {
+            result.status = 'danger';
+            result.details = `DNS 解析到中国 IP (${cnDnsIPs.map(x => x.ip).join(', ')})，国内路由直连`;
+        } else if (cnDnsIPs.length > 0) {
+            result.status = 'warning';
+            result.details = `部分 DNS 解析到中国 IP (${cnDnsIPs.map(x => x.ip).join(', ')})，可能存在分流泄漏`;
+        }
+        // 如果所有端点超时 → 路由阻断
+        else if (!anySuccess && timedOutPings.length === result.pingResults.length) {
+            result.status = 'timeout';
+            result.details = '所有端点均超时，可能被网络阻断';
+        }
+        // API 行为分析：对于买入链路，检测服务器是否主动拒绝
+        else if (isBuyChain && result.apiReachable && result.bestLatency !== null && result.bestLatency < 100) {
+            // 买入链路 API 响应很快（<100ms）→ 说明服务器可能在 CDN 层直接拒绝（403）
+            result.status = 'warning';
+            result.details = `买入端响应极快 (${result.bestLatency}ms)，疑似 CDN 层策略拦截，需登录账号验证`;
+        }
+        else if (isBuyChain && result.apiReachable === null) {
+            // 买入链路 API 不可达但 ping 正常 → 可能 API 被精准拦截
+            result.status = 'warning';
+            result.details = 'Image Ping 可达但 API 请求无响应，买入接口可能存在应用层拦截';
+        }
+        else if (isSellChain && result.apiReachable) {
+            // 卖出链路 API 可达 → 符合"卖出放行"政策
+            result.status = 'normal';
+            result.details = `卖出 API 可达，符合监管放行政策`;
+        }
+        else if (result.bestLatency !== null && result.bestLatency < 50) {
+            result.status = 'warning';
+            result.details = `延迟异常低 (${result.bestLatency}ms)，可能存在直连路由`;
+        }
+        else if (anySuccess) {
+            result.status = 'normal';
+            result.details = `解析到国际 CDN IP，连接可达`;
+        }
+        else {
+            result.status = 'normal';
+            result.details = `解析到国际 CDN IP，端点未响应但路由正常`;
+        }
+
+        return result;
+    }
+
+    // ---------- 9. UI Update Functions ----------
+    function setChainCellStatus(broker, chain, result) {
+        const cell = document.querySelector(`.chain-cell[data-broker="${broker}"][data-chain="${chain}"]`);
+        if (!cell) return;
+
+        // 找标签：flex 容器里的最后一个 span（不管它当前是什么 class）
+        const flexDiv = cell.querySelector('.flex.justify-between.items-center');
+        const tag = flexDiv ? flexDiv.querySelector('span:last-child') : null;
+        const ipEl = cell.querySelector('.chain-ip');
+        const latEl = cell.querySelector('.chain-latency');
+        const geoEl = cell.querySelector('.chain-geo');
+
+        // 关键元素不存在则不处理
+        if (!tag || !ipEl || !geoEl) return;
+
+        // Determine display IP — prefer the ping result's IP or DNS IP
+        let displayIP = '—';
+        let displayGeo = '';
+
+        if (result.dnsIPs.length > 0) {
+            // Pick the first non-China IP for display, fallback to any
+            const preferred = result.dnsIPs.find(x => x.geo && !x.geo.isCN) || result.dnsIPs[0];
+            displayIP = preferred.ip;
+            if (preferred.geo) {
+                const g = preferred.geo;
+                const flag = getFlag(g.country);
+                const loc = g.country === 'China' ? `${g.region || ''} ${g.city || ''}`.trim() : g.country;
+                displayGeo = `${flag} ${loc} · ${g.isp || ''}`.trim();
+                if (g.asn) displayGeo += ` (AS${g.asn})`;
+            }
+        }
+
+        // 计算显示用的延迟：优先用 Image Ping 结果，没有则用 API Probe 结果
+        let displayLatency = result.bestLatency;
+        if (!displayLatency && result.apiResults && result.apiResults.length > 0) {
+            const validApis = result.apiResults.filter(a => a.latency && a.latency < 7000);
+            if (validApis.length > 0) {
+                displayLatency = Math.min(...validApis.map(a => a.latency));
+            }
+        }
+
+        switch (result.status) {
+            case 'normal':
+                cell.className = 'bg-[#1a1d24] border border-gray-800/80 rounded-xl p-3.5 space-y-2 chain-cell';
+                tag.className = 'text-[10px] bg-emerald-950 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-900';
+                tag.textContent = '正常';
+                ipEl.className = 'text-sm font-mono font-bold text-white chain-ip';
+                ipEl.textContent = displayIP;
+                if (latEl) latEl.textContent = displayLatency ? `⏱ ${displayLatency}ms` : '';
+                geoEl.className = 'text-xs text-gray-500 chain-geo';
+                const apiNote = result.apiReachable ? 'API✓' : 'API✗';
+                geoEl.textContent = displayGeo ? `${displayGeo} · ${apiNote}` : `${result.details} · ${apiNote}`;
+                break;
+            case 'warning':
+                cell.className = 'bg-amber-950/10 border border-amber-900/40 rounded-xl p-3.5 space-y-2 chain-cell relative overflow-hidden';
+                tag.className = 'text-[10px] bg-amber-950 text-amber-400 px-1.5 py-0.5 rounded border border-amber-900';
+                tag.textContent = '注意';
+                ipEl.className = 'text-sm font-mono font-bold text-amber-400 chain-ip';
+                ipEl.textContent = displayIP;
+                if (latEl) latEl.textContent = displayLatency ? `⏱ ${displayLatency}ms` : '';
+                geoEl.className = 'text-xs text-amber-400/70 flex items-center gap-1 chain-geo';
+                geoEl.textContent = result.details;
+                break;
+            case 'danger':
+                cell.className = 'bg-red-950/10 border border-red-900/40 rounded-xl p-3.5 space-y-2 chain-cell relative overflow-hidden';
+                tag.className = 'text-[10px] bg-red-950 text-red-400 px-1.5 py-0.5 rounded border border-red-900 font-bold';
+                tag.textContent = '政策监管';
+                ipEl.className = 'text-sm font-mono font-bold text-red-400 chain-ip';
+                const cnIP = result.dnsIPs.find(x => x.geo && x.geo.isCN);
+                ipEl.textContent = cnIP ? cnIP.ip : displayIP;
+                if (latEl) latEl.textContent = displayLatency ? `⏱ ${displayLatency}ms` : '';
+                geoEl.className = 'text-xs text-red-400/70 flex items-center gap-1 chain-geo';
+                geoEl.textContent = result.details;
+                break;
+            case 'timeout':
+                cell.className = 'bg-[#1a1d24] border border-gray-800/80 rounded-xl p-3.5 space-y-2 chain-cell opacity-60';
+                tag.className = 'text-[10px] bg-gray-800 text-gray-500 px-1.5 py-0.5 rounded border border-gray-700';
+                tag.textContent = '超时';
+                ipEl.className = 'text-sm font-mono font-bold text-gray-500 chain-ip';
+                ipEl.textContent = displayIP !== '—' ? displayIP : '超时无响应';
+                if (latEl) latEl.textContent = displayLatency ? `⏱ ${displayLatency}ms` : '⏱ —';
+                geoEl.className = 'text-xs text-gray-600 chain-geo';
+                geoEl.textContent = result.details;
+                break;
+            default:
+                cell.className = 'bg-[#1a1d24] border border-gray-800/80 rounded-xl p-3.5 space-y-2 chain-cell';
+                tag.className = 'text-[10px] bg-gray-800 text-gray-500 px-1.5 py-0.5 rounded border border-gray-700';
+                tag.textContent = '未知';
+                ipEl.className = 'text-sm font-mono font-bold text-gray-500 chain-ip';
+                ipEl.textContent = displayIP;
+                if (latEl) latEl.textContent = displayLatency ? `⏱ ${displayLatency}ms` : '';
+                geoEl.className = 'text-xs text-gray-600 chain-geo';
+                geoEl.textContent = result.details;
+        }
+    }
+
+    function updateDiagnosis(broker, market, buy, sell) {
+        const diagEl = document.getElementById(`diag-${broker}`);
+        if (!diagEl) return;
+
+        const statuses = [
+            { key: '📈 大盘', status: market.status },
+            { key: '🛒 买入', status: buy.status },
+            { key: '💰 卖出', status: sell.status }
+        ];
+
+        // Determine overall card severity
+        const hasDanger = statuses.some(s => s.status === 'danger');
+        const hasWarning = statuses.some(s => s.status === 'warning');
+        const hasTimeout = statuses.some(s => s.status === 'timeout');
+        const allNormal = statuses.every(s => s.status === 'normal');
+
+        let bgClass, borderClass;
+        if (hasDanger) {
+            bgClass = 'bg-red-950/40';
+            borderClass = 'border-red-900/60';
+        } else if (hasWarning || hasTimeout) {
+            bgClass = 'bg-amber-950/40';
+            borderClass = 'border-amber-900/60';
+        } else if (allNormal) {
+            bgClass = 'bg-emerald-950/40';
+            borderClass = 'border-emerald-900/60';
+        } else {
+            bgClass = 'bg-gray-900';
+            borderClass = 'border-gray-800';
+        }
+        diagEl.className = `flex items-center space-x-2 ${bgClass} border ${borderClass} px-3 py-1.5 rounded-xl`;
+
+        const statusMap = {
+            'normal': { text: '正常', cls: 'text-emerald-400' },
+            'warning': { text: '注意', cls: 'text-amber-400' },
+            'danger': { text: '异常', cls: 'text-red-400' },
+            'timeout': { text: '超时', cls: 'text-gray-400' },
+        };
+
+        diagEl.innerHTML = '<span class="text-xs text-gray-400">综合诊断：</span>' +
+            statuses.map(s => {
+                const m = statusMap[s.status] || { text: '未知', cls: 'text-gray-400' };
+                return `<span class="text-xs font-bold ${m.cls}">${s.key} ${m.text}</span>`;
+            }).join('<span class="text-xs text-gray-500 mx-1">|</span>');
+    }
+
+    function updateBaseline(ip, geoInfo) {
+        const ipEl = document.getElementById('baseline-ip');
+        const geoEl = document.getElementById('baseline-geo');
+        const dot = document.getElementById('baseline-dot');
+
+        if (ip) {
+            dot.className = 'w-2.5 h-2.5 bg-emerald-400 rounded-full animate-pulse';
+            if (geoInfo) {
+                const flag = getFlag(geoInfo.country);
+                const loc = geoInfo.isCN ? `${flag} ${geoInfo.region || ''} ${geoInfo.city || ''}`.trim() : `${flag} ${geoInfo.country}`;
+                ipEl.innerHTML = `${ip} <span class="text-xs text-emerald-400 ml-1">(${loc})</span>`;
+                geoEl.textContent = `${geoInfo.isp || ''} ${geoInfo.asn ? 'AS'+geoInfo.asn : ''}`.trim();
+            } else {
+                ipEl.innerHTML = `${ip} <span class="text-xs text-gray-500 ml-1">(已获取)</span>`;
+            }
+        } else {
+            dot.className = 'w-2.5 h-2.5 bg-red-400 rounded-full';
+            ipEl.innerHTML = '获取失败 <span class="text-xs text-gray-500 ml-1">(IP Echo 无响应)</span>';
+        }
+    }
+
+    // ---------- 10. Status Text Animation ----------
+    let statusInterval = null;
+    const statusFrames = ['🟢 探测中', '🟡 探测中', '🟠 探测中', '🔴 探测中'];
+
+    function setStatusText(text) {
+        const el = document.getElementById('detect-status');
+        if (el) el.textContent = text;
+    }
+
+    function startStatusAnimation(brokerText) {
+        let i = 0;
+        if (statusInterval) clearInterval(statusInterval);
+        statusInterval = setInterval(() => {
+            setStatusText(`${statusFrames[i % statusFrames.length]} ${brokerText}`);
+            i++;
+        }, 600);
+    }
+
+    function stopStatusAnimation() {
+        if (statusInterval) {
+            clearInterval(statusInterval);
+            statusInterval = null;
+        }
+    }
+
+    // ---------- 11. Main Detection Flow ----------
+    let isDetecting = false;
+
+    async function runFullDetection() {
+        if (isDetecting) return;
+        isDetecting = true;
+
+        const btn = document.getElementById('btn-detect-all');
+        const btnText = document.getElementById('btn-detect-text');
+        const detectIcon = document.getElementById('detect-icon');
+
+        btnText.textContent = '探测中...';
+        btn.className = 'bg-gray-700 text-white text-sm px-5 py-2 rounded-xl border border-gray-600 flex items-center gap-2 cursor-not-allowed opacity-60';
+        detectIcon.innerHTML = '<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" stroke-dasharray="31.4 31.4" class="animate-spin"/>';
+
+        try {
+            // Phase 1: Baseline
+            setStatusText('📡 获取本机出口 IP 基线...');
+            const exitIP = await getExitIP();
+            if (exitIP) {
+                const geo = geoCache[exitIP] || await geoLookup(exitIP);
+                updateBaseline(exitIP, geo);
+                window._isDomestic = geo && geo.isCN;
+            } else {
+                updateBaseline(null, null);
+                window._isDomestic = null;
+            }
+            await new Promise(r => setTimeout(r, 500));
+
+            // Phase 2: Baseline latency
+            setStatusText('⏱️ 测量国内/国际网络延迟基线...');
+            const baselines = await measureLatencyBaseline();
+            setStatusText(`📊 基线：国内 ${baselines.domestic || '—'}ms | 国际 ${baselines.international || '—'}ms`);
+
+            // Phase 3: Probe each broker
+            const brokerKeys = Object.keys(BROKERS);
+            for (const bk of brokerKeys) {
+                const broker = BROKERS[bk];
+                startStatusAnimation(`${broker.icon} ${broker.name}`);
+
+                const market = await probeBrokerChain(bk, 'market', broker.chains.market);
+                setChainCellStatus(bk, 'market', market);
+                await new Promise(r => setTimeout(r, 300));
+
+                const buy = await probeBrokerChain(bk, 'buy', broker.chains.buy);
+                setChainCellStatus(bk, 'buy', buy);
+
+                // 国内环境下富途买入显示"正常" → 追加监管提示（探测能力不足）
+                if (bk === 'futu' && window._isDomestic && buy.status === 'normal') {
+                    try {
+                        const buyCell = document.querySelector(`.chain-cell[data-broker="futu"][data-chain="buy"]`);
+                        if (buyCell) {
+                            const flexDiv = buyCell.querySelector('.flex.justify-between.items-center');
+                            const spans = flexDiv ? flexDiv.querySelectorAll('span') : [];
+                            const tag = spans.length >= 2 ? spans[1] : null;
+                            const geoEl = buyCell.querySelector('.chain-geo');
+                            if (tag) {
+                                tag.textContent = '正常·监管无法执行';
+                                tag.className = 'text-[10px] bg-amber-950 text-amber-400 px-1.5 py-0.5 rounded border border-amber-900 font-bold';
+                            }
+                            if (geoEl) {
+                                geoEl.textContent = '⚠ 当前为国内 IP，富途买入限制在账号/App 应用层生效，本工具纯网络层探测无法确认';
+                            }
+                            buyCell.className = 'bg-amber-950/10 border border-amber-900/40 rounded-xl p-3.5 space-y-2 chain-cell relative overflow-hidden';
+                        }
+                    } catch (e) {
+                        console.warn('Futu regulatory override failed:', e);
+                    }
+                }
+                await new Promise(r => setTimeout(r, 300));
+
+                const sell = await probeBrokerChain(bk, 'sell', broker.chains.sell);
+                setChainCellStatus(bk, 'sell', sell);
+                await new Promise(r => setTimeout(r, 300));
+
+                updateDiagnosis(bk, market, buy, sell);
+            }
+
+            stopStatusAnimation();
+            setStatusText('✅ 全程链路探测完成');
+
+            // 保存探测时间戳
+            const now = new Date();
+            const ts = now.getFullYear() + '-' +
+                String(now.getMonth()+1).padStart(2,'0') + '-' +
+                String(now.getDate()).padStart(2,'0') + ' ' +
+                String(now.getHours()).padStart(2,'0') + ':' +
+                String(now.getMinutes()).padStart(2,'0') + ':' +
+                String(now.getSeconds()).padStart(2,'0');
+            window._lastProbeTime = ts;
+            const ptEl = document.getElementById('last-probe-time');
+            if (ptEl) ptEl.textContent = '上次探测: ' + ts;
+
+        } catch (e) {
+            stopStatusAnimation();
+            setStatusText('❌ 探测过程出错: ' + (e.message || '未知错误'));
+            console.error('Detection error:', e);
+        } finally {
+            isDetecting = false;
+            btnText.textContent = '重新探测';
+            btn.className = 'bg-gray-800 hover:bg-gray-700 text-white text-sm px-5 py-2 rounded-xl transition-all border border-gray-700 flex items-center gap-2';
+            detectIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>';
+        }
+    }
+
+    // ---------- 12. 本机 IP 页面真实数据加载 ----------
+    async function loadLocalIP() {
+        if (window._ipLoaded) return;
+        window._ipLoaded = true;
+
+        // --- 12a. 复制 IP ---
+        window.copyToClipboard = function(id) {
+            const el = document.getElementById(id);
+            if (!el || !el.textContent) return;
+            navigator.clipboard.writeText(el.textContent.trim()).catch(() => {});
+        };
+
+        // --- 12b. 获取主 IP & 地理位置 (通过 getExitIP 多通道降级) ---
+        let ip = '', geo = null;
+        try { ip = await getExitIP() || ''; } catch (e) {}
+
+        if (ip) {
+            // 从 geoCache 或 geoLookup 获取位置
+            geo = geoCache[ip] || null;
+            if (!geo) {
+                try { geo = await geoLookup(ip); } catch (e) {}
+            }
+
+            const isCN = geo && (geo.isCN || geo.country === 'China');
+            const countryName = isCN ? 'China' : (geo && geo.country ? geo.country : '');
+            const flag = getFlag(isCN ? 'China' : countryName);
+
+            document.getElementById('ip-v4').textContent = ip;
+            document.getElementById('ip-flag').textContent = flag;
+
+            if (geo && geo.country) {
+                const loc = geo.city ? `${geo.city}, ${geo.region || ''}, ${countryName}`.replace(/, $/, '') : (geo.region ? `${geo.region}, ${countryName}` : countryName);
+                document.getElementById('ip-location').textContent = loc;
+                document.getElementById('ip-isp').textContent = geo.isp || '';
+                document.getElementById('ip-asn').textContent = [geo.asn ? `AS${geo.asn}` : '', geo.isp || ''].filter(Boolean).join(' ');
+            } else {
+                document.getElementById('ip-location').textContent = countryName || '';
+                document.getElementById('ip-isp').textContent = '';
+                document.getElementById('ip-asn').textContent = '';
+            }
+
+            document.querySelector('#content-ip .opacity-50')?.classList.remove('opacity-50');
+        } else {
+            document.getElementById('ip-v4').textContent = '获取失败';
+            document.getElementById('ip-flag').textContent = '';
+        }
+
+        // --- 12c. 国内 IP 对比探测 ---
+        // 根据已获取的 IP 判断是国内还是国际环境
+        const isInChina = geo && geo.isCN;
+
+        // 国内 IP 对比
+        let domesticIP = ip, domesticGeo = '';
+        if (isInChina) {
+            domesticGeo = geo ? `${geo.region || ''} ${geo.city || ''} ${geo.isp || ''}`.trim() : '中国';
+        }
+
+        if (isInChina) {
+            document.getElementById('ip-domestic-label').innerHTML = `IP: ${domesticIP}`;
+            document.getElementById('ip-domestic-geo').textContent = domesticGeo || '中国';
+            document.getElementById('ip-cnip-label').innerHTML = `IP: ${domesticIP}`;
+            document.getElementById('ip-cnip-geo').textContent = domesticGeo || '中国';
+        } else if (ip) {
+            document.getElementById('ip-domestic-label').innerHTML = `IP: ${ip}`;
+            document.getElementById('ip-domestic-geo').textContent = '通过代理路由，国内视角不可用';
+            document.getElementById('ip-cnip-label').innerHTML = `IP: ${ip}`;
+            document.getElementById('ip-cnip-geo').textContent = '通过代理路由，国内视角不可用';
+        } else {
+            document.getElementById('ip-domestic-label').innerHTML = 'IP: 获取失败';
+            document.getElementById('ip-domestic-geo').textContent = '无法确定网络环境';
+            document.getElementById('ip-cnip-label').innerHTML = 'IP: 获取失败';
+            document.getElementById('ip-cnip-geo').textContent = '无法确定网络环境';
+        }
+
+        // 国际 IP 对比
+        if (ip && !isInChina) {
+            const cfLoc = geo ? `${geo.country || ''} ${geo.region || ''} ${geo.isp || ''}`.trim() : '';
+            document.getElementById('ip-cf-label').innerHTML = `IP: ${ip}`;
+            document.getElementById('ip-cf-geo').textContent = cfLoc;
+            document.getElementById('ip-ipinfo-label').innerHTML = `IP: ${ip}`;
+            document.getElementById('ip-ipinfo-geo').textContent = cfLoc;
+        } else if (ip) {
+            // 国内环境也显示 IP（但标注国内）
+            const cfLoc = `${geo.region || ''} ${geo.city || ''} ${geo.isp || ''}`.trim();
+            document.getElementById('ip-cf-label').innerHTML = `IP: ${ip}`;
+            document.getElementById('ip-cf-geo').textContent = cfLoc || '中国';
+            document.getElementById('ip-ipinfo-label').innerHTML = `IP: ${ip}`;
+            document.getElementById('ip-ipinfo-geo').textContent = cfLoc || '中国';
+        } else {
+            document.getElementById('ip-cf-label').innerHTML = 'IP: 获取失败';
+            document.getElementById('ip-ipinfo-label').innerHTML = 'IP: 获取失败';
+        }
+
+        // --- 12d. IPv6 探测 ---
+        (async () => {
+            try {
+                const ctrl = new AbortController();
+                const t = setTimeout(() => ctrl.abort(), 5000);
+                const r = await fetch('https://api6.ipify.org?format=json', { signal: ctrl.signal });
+                clearTimeout(t);
+                const d = await r.json();
+                if (d && d.ip) {
+                    document.getElementById('ip-v6').textContent = d.ip;
+                    document.getElementById('ip-v6').className = 'text-xs font-mono text-emerald-400 mt-0.5';
+                }
+            } catch (e) {
+                document.getElementById('ip-v6').textContent = 'signal timed out';
+                document.getElementById('ip-v6').className = 'text-xs font-mono text-red-400 mt-0.5';
+            }
+        })();
+
+        // --- 12e. 延迟探测 & 点阵 ---
+        const sites = [
+            { id: 'wechat', url: 'https://www.baidu.com/favicon.ico', color: 'emerald' },
+            { id: 'taobao', url: 'https://www.taobao.com/favicon.ico', color: 'emerald' },
+            { id: 'github', url: 'https://www.github.com/favicon.ico', color: 'lime' },
+            { id: 'youtube', url: 'https://www.youtube.com/favicon.ico', color: 'lime' }
+        ];
+
+        for (const site of sites) {
+            const start = performance.now();
+            const img = new Image();
+            let done = false;
+            let latency = null;
+
+            const timer = setTimeout(() => {
+                if (!done) { done = true; latency = null; }
+            }, 6000);
+
+            img.onload = () => { if (!done) { done = true; clearTimeout(timer); latency = Math.round(performance.now() - start); } };
+            img.onerror = () => { if (!done) { done = true; clearTimeout(timer); latency = Math.round(performance.now() - start); } };
+            img.src = site.url + '?_t=' + Date.now() + Math.random().toString(36).slice(2, 6);
+
+            // Wait for result
+            await new Promise(r => { const check = setInterval(() => { if (done) { clearInterval(check); r(); } }, 100); });
+
+            const latEl = document.getElementById(`latency-${site.id}`);
+            const dotsEl = document.getElementById(`dots-${site.id}`);
+
+            if (latency !== null) {
+                latEl.textContent = `${latency}ms`;
+                latEl.className = `text-xs font-mono font-bold text-${site.color}-400`;
+                // Generate dot matrix
+                const numDots = Math.min(5, Math.max(1, Math.round(latency / 40) + 1));
+                const bgColor = site.color === 'emerald' ? 'bg-emerald-500' : 'bg-lime-500';
+                dotsEl.innerHTML = '';
+                for (let i = 0; i < 5; i++) {
+                    const dot = document.createElement('span');
+                    dot.className = `w-1.5 h-1.5 rounded-full inline-block ${i < numDots ? bgColor : 'bg-gray-700'}`;
+                    dotsEl.appendChild(dot);
+                }
+            } else {
+                latEl.textContent = '超时';
+                latEl.className = 'text-xs font-mono font-bold text-red-400';
+                dotsEl.innerHTML = '';
+                for (let i = 0; i < 5; i++) {
+                    const dot = document.createElement('span');
+                    dot.className = 'w-1.5 h-1.5 bg-gray-700 rounded-full inline-block';
+                    dotsEl.appendChild(dot);
+                }
+            }
+        }
+    }
+
+    // 页面加载时自动运行本机 IP 探测
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(loadLocalIP, 200);
+    });
+
+    // ---------- 13. Tab Switching ----------
+    function switchTab(tab) {
+        const btnIp = document.getElementById('tab-ip');
+        const btnBroker = document.getElementById('tab-broker');
+        const btnPolicy = document.getElementById('tab-policy');
+        const contentIp = document.getElementById('content-ip');
+        const contentBroker = document.getElementById('content-broker');
+        const contentPolicy = document.getElementById('content-policy');
+
+        const allBtns = [btnIp, btnBroker, btnPolicy];
+        const allContents = [contentIp, contentBroker, contentPolicy];
+
+        if (tab === 'ip') {
+            btnIp.className = "flex-1 sm:flex-none text-center px-5 py-2 rounded-lg text-sm font-medium transition-all bg-gray-800 text-white shadow";
+            btnBroker.className = "flex-1 sm:flex-none text-center px-5 py-2 rounded-lg text-sm font-medium transition-all text-gray-400 hover:text-gray-200";
+            btnPolicy.className = "flex-1 sm:flex-none text-center px-5 py-2 rounded-lg text-sm font-medium transition-all text-gray-400 hover:text-gray-200";
+            contentIp.classList.remove('hidden');
+            contentBroker.classList.add('hidden');
+            contentPolicy.classList.add('hidden');
+        } else if (tab === 'broker') {
+            btnBroker.className = "flex-1 sm:flex-none text-center px-5 py-2 rounded-lg text-sm font-medium transition-all bg-gray-800 text-white shadow";
+            btnIp.className = "flex-1 sm:flex-none text-center px-5 py-2 rounded-lg text-sm font-medium transition-all text-gray-400 hover:text-gray-200";
+            btnPolicy.className = "flex-1 sm:flex-none text-center px-5 py-2 rounded-lg text-sm font-medium transition-all text-gray-400 hover:text-gray-200";
+            contentIp.classList.add('hidden');
+            contentBroker.classList.remove('hidden');
+            contentPolicy.classList.add('hidden');
+            // 显示上次探测时间（如果有）
+            const ptEl = document.getElementById('last-probe-time');
+            if (ptEl && window._lastProbeTime) {
+                ptEl.textContent = '上次探测: ' + window._lastProbeTime;
+            }
+        } else {
+            btnPolicy.className = "flex-1 sm:flex-none text-center px-5 py-2 rounded-lg text-sm font-medium transition-all bg-gray-800 text-white shadow";
+            btnIp.className = "flex-1 sm:flex-none text-center px-5 py-2 rounded-lg text-sm font-medium transition-all text-gray-400 hover:text-gray-200";
+            btnBroker.className = "flex-1 sm:flex-none text-center px-5 py-2 rounded-lg text-sm font-medium transition-all text-gray-400 hover:text-gray-200";
+            contentIp.classList.add('hidden');
+            contentBroker.classList.add('hidden');
+            contentPolicy.classList.remove('hidden');
+        }
+    }
+    </script>
+</body>
+</html>
